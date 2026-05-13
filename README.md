@@ -1,0 +1,61 @@
+# Namma Hasiru 🌱
+
+Namma Hasiru is a feature-rich, open-source Android application designed to track and manage tree plantation drives. It provides users with an eco-friendly UI to log their planted saplings, visualize them on a map, get background watering reminders, and use ML to recognize plant types.
+
+## 🚀 Features
+
+* **Authentication**: Secure entry with Firebase Google Sign-In.
+* **Plantation Dashboard**: View key statistics of your plantation activities locally persisted via Room Database.
+* **Interactive Maps**: Real-time integration with Google Maps API and `FusedLocationProviderClient` to accurately drop pins and track the locations of planted saplings.
+* **Machine Learning Integration**: Built-in camera feature utilizing CameraX and Google ML Kit Image Labeling for instant plant identification.
+* **Smart Reminders**: Automated background tasks scheduled through Android WorkManager to remind users to water their plants and update their status.
+* **Modern UI**: Completely built with Jetpack Compose featuring a cohesive, eco-themed visual identity (Dark & Light modes supported).
+
+## 🛠️ Tech Stack & Architecture
+
+* **Language**: Kotlin
+* **Architecture**: MVVM (Model-View-ViewModel)
+* **UI Toolkit**: Jetpack Compose
+* **Local Data Persistence**: Room Database
+* **Background Tasks**: WorkManager
+* **Mapping**: Google Maps Compose & Play Services Location
+* **Machine Learning**: CameraX + ML Kit Image Labeling
+* **Authentication**: Firebase Auth + Google Identity Services
+* **Image Loading**: Coil
+
+## 📦 Building from Source
+
+### Prerequisites
+1. Android Studio Iguana (or newer).
+2. Java SDK 17+.
+3. A Firebase Project configured for Android.
+4. Google Maps API Key.
+
+### Setup Instructions
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/Namma-Hasiru.git
+   ```
+2. **Add Firebase Credentials:**
+   * Go to the [Firebase Console](https://console.firebase.google.com/).
+   * Download the `google-services.json` file for your registered Android app.
+   * Place the `google-services.json` file in the `app/` directory of the project.
+3. **Configure Maps API Key:**
+   * Go to the Google Cloud Console and generate a Maps SDK for Android API Key.
+   * Open `local.properties` in your project root and add:
+     ```properties
+     MAPS_API_KEY=YOUR_API_KEY_HERE
+     ```
+4. **Build and Run:**
+   * Open the project in Android Studio.
+   * Sync the project with Gradle files.
+   * Select an emulator or physical device and click Run.
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](../../issues).
+
+## 📄 License
+
+This project is open-source and available under the [MIT License](LICENSE).
