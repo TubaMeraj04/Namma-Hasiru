@@ -54,117 +54,114 @@ fun GuideScreen() {
         else -> allGuides
     }
 
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background),
+        contentPadding = PaddingValues(bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Top Header Section
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    color = GreenPrimary,
-                    shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
-                )
-                .padding(24.dp)
-        ) {
-            Column {
-                Text(
-                    text = "Species Guide \uD83D\uDCD6",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Data-driven recommendations for your local soil profile. Plant smarter.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = Color.White.copy(alpha = 0.9f)
-                )
+        item {
+            // Top Header Section
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = GreenPrimary,
+                        shape = RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp)
+                    )
+                    .padding(24.dp)
+            ) {
+                Column {
+                    Text(
+                        text = "Species Guide \uD83D\uDCD6",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Data-driven recommendations for your local soil profile. Plant smarter.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.White.copy(alpha = 0.9f)
+                    )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Filters Pill Row
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            FilterChip(selected = selectedFilter == "All", onClick = { selectedFilter = "All" }, label = { Text("All", fontWeight = if (selectedFilter == "All") FontWeight.Bold else FontWeight.Normal) })
-            FilterChip(selected = selectedFilter == "High Survival", onClick = { selectedFilter = "High Survival" }, label = { Text("High Survival") })
-            FilterChip(selected = selectedFilter == "Low Water", onClick = { selectedFilter = "Low Water" }, label = { Text("Low Water") })
-            FilterChip(selected = selectedFilter == "Fast Growing", onClick = { selectedFilter = "Fast Growing" }, label = { Text("Fast Growing") })
+        item {
+            // Filters Pill Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(selected = selectedFilter == "All", onClick = { selectedFilter = "All" }, label = { Text("All") })
+                FilterChip(selected = selectedFilter == "High Survival", onClick = { selectedFilter = "High Survival" }, label = { Text("High Survival") })
+                FilterChip(selected = selectedFilter == "Low Water", onClick = { selectedFilter = "Low Water" }, label = { Text("Low Water") })
+                FilterChip(selected = selectedFilter == "Fast Growing", onClick = { selectedFilter = "Fast Growing" }, label = { Text("Fast Growing") })
+            }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        LazyColumn(
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(guides) { guide ->
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    shape = RoundedCornerShape(20.dp)
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = guide.name,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = EarthenBrown
-                                )
-                                Text(
-                                    text = guide.scientificName,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.Gray,
-                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
-                                )
-                            }
-                            if (guide.recommended) {
-                                Box(
-                                    modifier = Modifier
-                                        .background(Color(0xFFFFF8E1), RoundedCornerShape(12.dp))
-                                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFB300), modifier = Modifier.size(16.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Best Match", color = Color(0xFFF57C00), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                                    }
+        items(guides) { guide ->
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = guide.name,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = guide.scientificName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                            )
+                        }
+                        if (guide.recommended) {
+                            Box(
+                                modifier = Modifier
+                                    .background(MaterialTheme.colorScheme.tertiaryContainer, RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Star, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Best Match", color = MaterialTheme.colorScheme.onTertiaryContainer, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
-                        
-                        Divider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFFE0E0E0))
-                        
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Column {
-                                Text("Optimal Soil", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
-                                Text(guide.soil, fontWeight = FontWeight.Medium)
-                            }
-                            Column {
-                                Text("Water Needs", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
-                                Text(guide.water, fontWeight = FontWeight.Medium)
-                            }
-                            Column {
-                                Text("Survival Rate", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
-                                Text(guide.successRate, fontWeight = FontWeight.Bold, color = GreenPrimary)
-                            }
+                    }
+                    
+                    Divider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                    
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column {
+                            Text("Optimal Soil", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(guide.soil, fontWeight = FontWeight.Medium)
+                        }
+                        Column {
+                            Text("Water Needs", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(guide.water, fontWeight = FontWeight.Medium)
+                        }
+                        Column {
+                            Text("Survival Rate", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(guide.successRate, fontWeight = FontWeight.Bold, color = GreenPrimary)
                         }
                     }
                 }

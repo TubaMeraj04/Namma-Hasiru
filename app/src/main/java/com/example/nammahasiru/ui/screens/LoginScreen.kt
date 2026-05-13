@@ -77,7 +77,14 @@ fun LoginScreen(navController: NavController) {
                             popUpTo("login") { inclusive = true }
                         }
                     } catch (e: Exception) {
-                        Toast.makeText(context, "Google Sign-In failed: ${e.message}", Toast.LENGTH_LONG).show()
+                        val errorMessage = when (e) {
+                            is com.google.firebase.FirebaseNetworkException -> "Network error: Please check your internet connection."
+                            is com.google.firebase.auth.FirebaseAuthInvalidUserException -> "No account found with this email."
+                            is com.google.firebase.auth.FirebaseAuthInvalidCredentialsException -> "Invalid password or malformed email."
+                            else -> e.localizedMessage ?: "Google Sign-In failed"
+                        }
+                        android.util.Log.e("LoginScreen", "Google Sign-In error", e)
+                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
                     } finally {
                         isLoading = false
                     }
@@ -123,7 +130,14 @@ fun LoginScreen(navController: NavController) {
                         popUpTo("login") { inclusive = true }
                     }
                 } catch (e: Exception) {
-                    authErrorMessage = e.message
+                    android.util.Log.e("LoginScreen", "Auth error", e)
+                    authErrorMessage = when (e) {
+                        is com.google.firebase.FirebaseNetworkException -> "Network connection timed out. Please check your internet or emulator network settings."
+                        is com.google.firebase.auth.FirebaseAuthInvalidUserException -> "User account not found."
+                        is com.google.firebase.auth.FirebaseAuthInvalidCredentialsException -> "Incorrect email or password."
+                        is com.google.firebase.auth.FirebaseAuthUserCollisionException -> "An account already exists with this email."
+                        else -> e.localizedMessage ?: "An unexpected authentication error occurred."
+                    }
                 } finally {
                     isLoading = false
                 }

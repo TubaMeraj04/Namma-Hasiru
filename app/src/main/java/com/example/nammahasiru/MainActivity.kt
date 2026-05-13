@@ -86,12 +86,14 @@ fun MainScreen() {
                             label = { Text(screen.title) },
                             selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                             onClick = {
-                                navController.navigate(screen.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                                if (currentDestination?.route != screen.route) {
+                                    navController.navigate(screen.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
                                 }
                             }
                         )
@@ -104,6 +106,10 @@ fun MainScreen() {
             composable("login") { LoginScreen(navController) }
             composable(Screen.Dashboard.route) { DashboardScreen(navController, viewModel) }
             composable(Screen.Map.route) { MapScreen(navController, viewModel) }
+            composable(Screen.Plant.route + "?treeId={treeId}") { backStackEntry ->
+                val treeId = backStackEntry.arguments?.getString("treeId")?.toIntOrNull()
+                PlantScreen(navController, viewModel, treeId)
+            }
             composable(Screen.Plant.route) { PlantScreen(navController, viewModel) }
             composable(Screen.Guide.route) { GuideScreen() }
         }

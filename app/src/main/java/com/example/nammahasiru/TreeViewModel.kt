@@ -32,6 +32,16 @@ class TreeViewModel(private val treeDao: TreeDao) : ViewModel() {
             treeDao.updateTree(tree.copy(status = newStatus))
         }
     }
+
+    fun updateTree(tree: TreeEntity) {
+        viewModelScope.launch {
+            treeDao.updateTree(tree)
+        }
+    }
+
+    suspend fun getTreeById(id: Int): TreeEntity? {
+        return treeDao.getTreeById(id)
+    }
 }
 
 class TreeViewModelFactory(private val treeDao: TreeDao) : ViewModelProvider.Factory {

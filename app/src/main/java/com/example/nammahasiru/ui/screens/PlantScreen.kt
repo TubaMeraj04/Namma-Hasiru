@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -18,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.asImageBitmap
@@ -79,7 +82,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PlantScreen(navController: NavController, viewModel: TreeViewModel) {
+fun PlantScreen(navController: NavController, viewModel: TreeViewModel, treeId: Int? = null) {
     var speciesName by remember { mutableStateOf("") }
     var locationFetched by remember { mutableStateOf(false) }
     var latitude by remember { mutableDoubleStateOf(0.0) }
@@ -99,6 +102,24 @@ fun PlantScreen(navController: NavController, viewModel: TreeViewModel) {
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
+    
+    var existingTree by remember { mutableStateOf<TreeEntity?>(null) }
+    var isUpdateMode by remember { mutableStateOf(treeId != null) }
+
+    LaunchedEffect(treeId) {
+        if (treeId != null) {
+            val tree = viewModel.getTreeById(treeId)
+            if (tree != null) {
+                existingTree = tree
+                speciesName = tree.speciesName
+                latitude = tree.latitude
+                longitude = tree.longitude
+                locationFetched = true
+                plantHealthStatus = tree.status
+                // We don't load the old photoBitmap because we want a new one.
+            }
+        }
+    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -165,10 +186,12 @@ fun PlantScreen(navController: NavController, viewModel: TreeViewModel) {
         return
     }
 
+    val scrollState = rememberScrollState()
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(scrollState)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -183,7 +206,7 @@ fun PlantScreen(navController: NavController, viewModel: TreeViewModel) {
             }
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Record a New Plant \uD83C\uDF31",
+                text = if (isUpdateMode) "Update Plant Status \uD83D\uDCDD" else "Record a New Plant \uD83C\uDF31",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = GreenPrimary
@@ -195,8 +218,8 @@ fun PlantScreen(navController: NavController, viewModel: TreeViewModel) {
                 .fillMaxWidth()
                 .height(220.dp)
                 .clip(RoundedCornerShape(24.dp))
-                .background(if (photoTaken) Color.Black else Color(0xFFE8F5E9))
-                .border(2.dp, if (photoTaken) GreenPrimary else Color(0xFFC8E6C9), RoundedCornerShape(24.dp))
+                .background(if (photoTaken) Color.Black else MaterialTheme.colorScheme.surfaceVariant)
+                .border(2.dp, if (photoTaken) GreenPrimary else MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp))
                 .clickable {
                     if (!hasCameraPermission) {
 
@@ -364,9 +387,10 @@ fun PlantScreen(navController: NavController, viewModel: TreeViewModel) {
 
         OutlinedTextField(
             value = speciesName,
-            onValueChange = { speciesName = it },
+            onValueChange = { if (!isUpdateMode) speciesName = it },
             label = { Text("Plant Species (e.g., Neem, Mango)") },
             modifier = Modifier.fillMaxWidth(),
+            enabled = !isUpdateMode,
             colors = TextFieldDefaults.outlinedTextFieldColors(
                 focusedBorderColor = GreenPrimary
             ),
@@ -392,106 +416,108 @@ fun PlantScreen(navController: NavController, viewModel: TreeViewModel) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedButton(
-            onClick = { 
-                if (hasLocationPermission) {
-                    fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
-                        .addOnSuccessListener { location ->
-                            if (location != null) {
-                                latitude = location.latitude
-                                longitude = location.longitude
-                                locationFetched = true
-                            } else {
-                                Toast.makeText(context, "Location not found. Please turn on your phone's GPS.", Toast.LENGTH_LONG).show()
-                            }
-                        }
-                        .addOnFailureListener {
-                            Toast.makeText(context, "Error fetching location.", Toast.LENGTH_SHORT).show()
-                        }
+        // Location Section
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.LocationOn, contentDescription = null, tint = GreenPrimary)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Location Details", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                if (locationFetched) {
+                    Text("Latitude: ${String.format("%.4f", latitude)}", style = MaterialTheme.typography.bodyMedium)
+                    Text("Longitude: ${String.format("%.4f", longitude)}", style = MaterialTheme.typography.bodyMedium)
+                    if (isUpdateMode) {
+                        Text("(Location Fixed for Update)", style = MaterialTheme.typography.labelSmall, color = GreenPrimary)
+                    }
                 } else {
-                    permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
+                    Text("No location captured yet", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
                 }
-            },
-            modifier = Modifier.fillMaxWidth().height(60.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = if (locationFetched) GreenPrimary else Color.DarkGray
-            )
-        ) {
-            Icon(if (locationFetched) Icons.Default.CheckCircle else Icons.Default.LocationOn, contentDescription = null)
-            Spacer(Modifier.width(12.dp))
-            Text(if (locationFetched) "GPS: ${String.format("%.4f", latitude)}°, ${String.format("%.4f", longitude)}°" else "Fetch GPS Coordinates", fontWeight = FontWeight.Bold)
+                
+                if (!isUpdateMode) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = {
+                            if (hasLocationPermission) {
+                                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                                    if (location != null) {
+                                        latitude = location.latitude
+                                        longitude = location.longitude
+                                        locationFetched = true
+                                    } else {
+                                        Toast.makeText(context, "Please enable GPS", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            } else {
+                                permissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Get Current Location")
+                    }
+                }
+            }
         }
 
-        if (locationFetched) {
-            Spacer(modifier = Modifier.height(16.dp))
-            val cameraPositionState = rememberCameraPositionState {
-                position = CameraPosition.fromLatLngZoom(LatLng(latitude, longitude), 15f)
-            }
-            LaunchedEffect(latitude, longitude) {
-                cameraPositionState.position = CameraPosition.fromLatLngZoom(LatLng(latitude, longitude), 15f)
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .border(2.dp, GreenPrimary, RoundedCornerShape(16.dp))
-            ) {
-                GoogleMap(
-                    modifier = Modifier.fillMaxSize(),
-                    cameraPositionState = cameraPositionState
+        Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = {
+                        if (speciesName.isNotEmpty() && locationFetched && photoTaken) {
+                            val photoFile = File(context.filesDir, "tree_${System.currentTimeMillis()}.jpg")
+                            val out = FileOutputStream(photoFile)
+                            photoBitmap?.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                            out.flush()
+                            out.close()
+
+                            if (isUpdateMode && existingTree != null) {
+                                // Update existing tree
+                                val updatedTree = existingTree!!.copy(
+                                    status = plantHealthStatus,
+                                    photoUri = photoFile.absolutePath,
+                                )
+                                viewModel.updateTree(updatedTree)
+                                isSubmitted = true
+                            } else {
+                                // Insert new tree
+                                val tree = TreeEntity(
+                                    speciesName = speciesName,
+                                    latitude = latitude,
+                                    longitude = longitude,
+                                    photoUri = photoFile.absolutePath,
+                                    datePlanted = System.currentTimeMillis(),
+                                    status = plantHealthStatus
+                                )
+                                viewModel.insertTree(tree)
+                                
+                                // Schedule reminder
+                                if (plantHealthStatus != "Dead") {
+                                    val reminderRequest = OneTimeWorkRequestBuilder<StatusReminderWorker>()
+                                        .setInitialDelay(90, TimeUnit.DAYS)
+                                        .setInputData(workDataOf("tree_name" to speciesName))
+                                        .build()
+                                    WorkManager.getInstance(context).enqueue(reminderRequest)
+                                }
+                                isSubmitted = true
+                            }
+                        } else {
+                            Toast.makeText(context, "Please complete all fields and take a photo", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Marker(
-                        state = MarkerState(position = LatLng(latitude, longitude)),
-                        title = speciesName.ifEmpty { "Plant" }
-                    )
+                    Text(if (isUpdateMode) "Update Status & Photo" else "Geotag Plant", fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 }
-            }
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        Button(
-            onClick = {
-                coroutineScope.launch {
-                    var photoPath: String? = null
-                    if (photoBitmap != null) {
-                        photoPath = saveBitmapToStorage(context, photoBitmap!!)
-                    }
-
-                    val statusToSave = if (plantHealthStatus == "Dead") "Died" else "Planted"
-                    val entity = TreeEntity(
-                        speciesName = speciesName,
-                        latitude = latitude,
-                        longitude = longitude,
-                        datePlanted = System.currentTimeMillis(),
-                        status = statusToSave,
-                        photoUri = photoPath
-                    )
-                    viewModel.insertTree(entity)
-                    
-                    if (plantHealthStatus != "Dead") {
-                        // Schedule 90-day reminder
-                        val workRequest = OneTimeWorkRequestBuilder<StatusReminderWorker>()
-                            .setInitialDelay(90, TimeUnit.DAYS)
-                            .setInputData(workDataOf("TREE_NAME" to speciesName))
-                            .build()
-                        WorkManager.getInstance(context).enqueue(workRequest)
-                    }
-
-                    isSubmitted = true
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = GreenPrimary),
-            shape = RoundedCornerShape(30.dp),
-            enabled = speciesName.isNotEmpty() && photoTaken && locationFetched
-        ) {
-            Text("Complete Geotagging", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        }
         
         Spacer(modifier = Modifier.height(24.dp))
     }

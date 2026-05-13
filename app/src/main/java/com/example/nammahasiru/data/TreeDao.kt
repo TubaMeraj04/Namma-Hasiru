@@ -22,4 +22,7 @@ interface TreeDao {
 
     @Query("SELECT COUNT(*) FROM trees WHERE status = 'Survived'")
     fun getSurvivedTreesCount(): Flow<Int>
+
+    @Query("SELECT * FROM trees WHERE id = :id")
+    suspend fun getTreeById(id: Int): TreeEntity?
 }

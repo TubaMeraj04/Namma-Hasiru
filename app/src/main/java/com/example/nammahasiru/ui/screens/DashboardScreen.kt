@@ -13,6 +13,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,6 +39,7 @@ import com.example.nammahasiru.TreeViewModelFactory
 
 import androidx.compose.material.icons.filled.ExitToApp
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 @Composable
 fun DashboardScreen(navController: NavController, viewModel: TreeViewModel) {
@@ -44,6 +49,7 @@ fun DashboardScreen(navController: NavController, viewModel: TreeViewModel) {
 @Composable
 fun DashboardContent(navController: NavController, viewModel: TreeViewModel) {
     var animationPlayed by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     LaunchedEffect(key1 = true) {
         animationPlayed = true
     }
@@ -61,100 +67,185 @@ fun DashboardContent(navController: NavController, viewModel: TreeViewModel) {
         label = "progress"
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp, top = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Welcome to Namma Hasiru \uD83C\uDF3F",
-                style = MaterialTheme.typography.headlineMedium,
-                color = GreenPrimary,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f)
-            )
-            IconButton(
-                onClick = {
-                    FirebaseAuth.getInstance().signOut()
-                    navController.navigate("login") {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val user = FirebaseAuth.getInstance().currentUser
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                modifier = Modifier.width(300.dp),
+                drawerContainerColor = MaterialTheme.colorScheme.surface,
+                drawerTonalElevation = 4.dp
             ) {
-                Icon(Icons.Default.ExitToApp, contentDescription = "Logout", tint = GreenPrimary)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp)
+                ) {
+                    // Drawer Header
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .background(GreenPrimary, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.AccountCircle, contentDescription = null, tint = Color.White, modifier = Modifier.size(60.dp))
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        text = user?.email ?: "Guest User",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    
+                    Text(
+                        text = "Environmental Guardian",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = GreenPrimary
+                    )
+
+                    Divider(modifier = Modifier.padding(vertical = 24.dp))
+
+                    // Stats Section
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Your Contribution", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.List, contentDescription = null, tint = GreenPrimary)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = "$totalTrees Trees Planted",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    // Logout Button
+                    NavigationDrawerItem(
+                        icon = { Icon(Icons.Default.ExitToApp, contentDescription = null) },
+                        label = { Text("Log Out") },
+                        selected = false,
+                        onClick = {
+                            FirebaseAuth.getInstance().signOut()
+                            navController.navigate("login") {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        },
+                        colors = NavigationDrawerItemDefaults.colors(
+                            unselectedIconColor = MaterialTheme.colorScheme.error,
+                            unselectedTextColor = MaterialTheme.colorScheme.error
+                        )
+                    )
+                }
             }
         }
-
-        // Survival Score Card
-        Card(
+    ) {
+        LazyColumn(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 24.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            shape = RoundedCornerShape(24.dp)
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text(
-                    text = "Village Overall Impact \uD83C\uDF0D",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = EarthenBrown,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        text = "${survivalRatePercent}%",
-                        style = MaterialTheme.typography.displayLarge,
-                        color = GreenPrimary,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                    Text(
-                        text = " survival rate",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(bottom = 8.dp, start = 8.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-                LinearProgressIndicator(
-                    progress = progressAnimation,
+            item {
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(12.dp)
-                        .clip(RoundedCornerShape(6.dp)),
-                    color = GreenPrimary,
-                    trackColor = Color(0xFFC8E6C9)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("$totalTrees planted", color = Color.DarkGray, style = MaterialTheme.typography.bodySmall)
-                    Text("$survivedTrees survived", color = GreenPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                        .padding(bottom = 8.dp, top = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = GreenPrimary, modifier = Modifier.size(32.dp))
+                    }
+                    Text(
+                        text = "Namma Hasiru \uD83C\uDF3F",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = GreenPrimary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(start = 16.dp).weight(1f)
+                    )
                 }
             }
-        }
 
-        Text(
-            text = "Upcoming Actions \uD83D\uDD14",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
+            item {
+                // Survival Score Card
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                    shape = RoundedCornerShape(24.dp)
+                ) {
+                    Column(modifier = Modifier.padding(24.dp)) {
+                        Text(
+                            text = "Village Overall Impact \uD83C\uDF0D",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.secondary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text(
+                                text = "${survivalRatePercent}%",
+                                style = MaterialTheme.typography.displayLarge,
+                                color = GreenPrimary,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                text = " survival rate",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 8.dp, start = 8.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(24.dp))
+                        LinearProgressIndicator(
+                            progress = progressAnimation,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(12.dp)
+                                .clip(RoundedCornerShape(6.dp)),
+                            color = GreenPrimary,
+                            trackColor = GreenPrimary.copy(alpha = 0.2f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("$totalTrees planted", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                            Text("$survivedTrees survived", color = GreenPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
 
-        // Reminders List
-        if (trees.isEmpty()) {
-            Text("No plants geotagged yet. Add your first plant!", color = Color.Gray, modifier = Modifier.padding(vertical = 16.dp))
-        } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            item {
+                Text(
+                    text = "Upcoming Actions \uD83D\uDD14",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
+            // Reminders List
+            if (trees.isEmpty()) {
+                item {
+                    Text("No plants geotagged yet. Add your first plant!", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 16.dp))
+                }
+            } else {
                 items(trees.size) { index ->
                     val tree = trees[index]
                     val daysSincePlanted = ((System.currentTimeMillis() - tree.datePlanted) / (1000 * 60 * 60 * 24)).toInt()
@@ -179,7 +270,7 @@ fun ReminderItem(treeName: String, daysSincePlanted: Int, isUrgent: Boolean, sta
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isUrgent) Color(0xFFFFF3E0) else MaterialTheme.colorScheme.surfaceVariant
+            containerColor = if (isUrgent) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surfaceVariant
         )
     ) {
         Row(
@@ -196,7 +287,7 @@ fun ReminderItem(treeName: String, daysSincePlanted: Int, isUrgent: Boolean, sta
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .background(if (isUrgent) Color(0xFFFF9800) else GreenPrimary, shape = CircleShape),
+                        .background(if (isUrgent) MaterialTheme.colorScheme.error else GreenPrimary, shape = CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -218,9 +309,9 @@ fun ReminderItem(treeName: String, daysSincePlanted: Int, isUrgent: Boolean, sta
                         style = MaterialTheme.typography.bodySmall,
                         color = when {
                             status == "Survived" -> GreenPrimary
-                            status == "Died" || status == "Dead" -> Color.Red
-                            isUrgent -> Color(0xFFE65100)
-                            else -> Color.DarkGray
+                            status == "Died" || status == "Dead" -> MaterialTheme.colorScheme.error
+                            isUrgent -> MaterialTheme.colorScheme.error
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant
                         }
                     )
                 }
@@ -231,8 +322,8 @@ fun ReminderItem(treeName: String, daysSincePlanted: Int, isUrgent: Boolean, sta
                 colors = ButtonDefaults.buttonColors(
                     containerColor = when {
                         status == "Survived" -> GreenPrimary
-                        status == "Died" || status == "Dead" -> Color.Gray
-                        isUrgent -> Color(0xFFFF9800)
+                        status == "Died" || status == "Dead" -> MaterialTheme.colorScheme.outline
+                        isUrgent -> MaterialTheme.colorScheme.error
                         else -> GreenPrimary
                     }
                 ),
